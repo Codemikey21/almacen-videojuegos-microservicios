@@ -13,7 +13,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # --- Config ---
-GATEWAY_PORT    = int(os.getenv("GATEWAY_PORT",    "8000"))
+GATEWAY_PORT    = int(os.getenv("GATEWAY_PORT",    "8080"))
 SERVICE_TIMEOUT = int(os.getenv("SERVICE_TIMEOUT", "5"))
 CATALOGO_URL    = os.getenv("CATALOGO_URL",   "http://servicio-catalogo:8001")
 INVENTARIO_URL  = os.getenv("INVENTARIO_URL", "http://servicio-inventario:8002")

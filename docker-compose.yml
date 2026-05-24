@@ -1,0 +1,105 @@
+# =============================================================================
+# Almacen de Videojuegos - Arquitectura de Microservicios
+# =============================================================================
+#
+# COMANDOS PRINCIPALES:
+#   Levantar todos los servicios (con rebuild de imagenes):
+#     docker compose up --build
+#
+#   Detener y eliminar contenedores:
+#     docker compose down
+#
+#   Test del Mono (simular caida del servicio de inventario):
+#     docker stop servicio-inventario
+#
+# =============================================================================
+
+services:
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    environment:
+      GATEWAY_PORT: 8080
+      CATALOGO_URL: http://servicio-catalogo:8001
+      INVENTARIO_URL: http://servicio-inventario:8002
+      ORDENES_URL: http://servicio-ordenes:8003
+      SERVICE_TIMEOUT: ${SERVICE_TIMEOUT:-5}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    networks:
+      - red-frontend
+      - red-backend
+    depends_on:
+      - servicio-catalogo
+      - servicio-inventario
+      - servicio-ordenes
+    restart: unless-stopped
+
+  servicio-catalogo:
+    build: ./servicio-catalogo
+    container_name: servicio-catalogo
+    ports:
+      - "${CATALOGO_PORT:-8001}:8001"
+    environment:
+      CATALOGO_PORT: 8001
+      CATALOGO_DB_PATH: /app/data/catalogo.db
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - catalogo-data:/app/data
+    networks:
+      - red-backend
+    restart: unless-stopped
+
+  servicio-inventario:
+    build: ./servicio-inventario
+    container_name: servicio-inventario
+    ports:
+      - "${INVENTARIO_PORT:-8002}:8002"
+    environment:
+      INVENTARIO_PORT: 8002
+      INVENTARIO_DB_PATH: /app/data/inventario.db
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - inventario-data:/app/data
+    networks:
+      - red-backend
+    restart: unless-stopped
+
+  servicio-ordenes:
+    build: ./servicio-ordenes
+    container_name: servicio-ordenes
+    ports:
+      - "${ORDENES_PORT:-8003}:8003"
+    environment:
+      ORDENES_PORT: 8003
+      ORDENES_DB_PATH: /app/data/ordenes.db
+      CATALOGO_URL: http://servicio-catalogo:8001
+      INVENTARIO_URL: http://servicio-inventario:8002
+      SERVICE_TIMEOUT: ${SERVICE_TIMEOUT:-5}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ordenes-data:/app/data
+    networks:
+      - red-backend
+    depends_on:
+      - servicio-catalogo
+      - servicio-inventario
+    restart: unless-stopped
+
+networks:
+  red-frontend:
+    driver: bridge
+    name: videojuegos-frontend
+  red-backend:
+    driver: bridge
+    name: videojuegos-backend
+
+volumes:
+  catalogo-data:
+    name: videojuegos-catalogo-db
+  inventario-data:
+    name: videojuegos-inventario-db
+  ordenes-data:
+    name: videojuegos-ordenes-db
