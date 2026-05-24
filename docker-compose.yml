@@ -37,6 +37,17 @@ services:
       - servicio-ordenes
     restart: unless-stopped
 
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    networks:
+      - red-frontend
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
+
   servicio-catalogo:
     build: ./servicio-catalogo
     container_name: servicio-catalogo
